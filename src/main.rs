@@ -20,55 +20,15 @@
 // API DOCS. Refer to this
 // https://yts.mx/api
 
-use reqwest::Error;
 use serde::Deserialize;
+use std::error::Error;
 use urlencoding::encode as encode_url;
 
-#[derive(Deserialize, Debug)]
-struct Torrent {
-    hash: String,
-    quality: String,
-    #[serde(rename = "type")]
-    type_: String,
-    video_codec: String,
-    seeds: u32,
-    peers: u32,
-    size: String,
-    size_bytes: u64,
-}
+pub mod torr;
 
-// magnet:?xt=urn:btih:TORRENT_HASH&dn=Url+Encoded+Movie+Name&tr=http://track.one:1234/announce&tr=udp://track.two:80
+use torr::Torrent;
 
-impl Torrent {
-    fn get_trackers() -> Vec<String> {
-        vec![
-            "udp://open.demonii.com:1337/announce",
-            "udp://tracker.openbittorrent.com:80",
-            "udp://tracker.coppersurfer.tk:6969",
-            "udp://glotorrents.pw:6969/announce",
-            "udp://tracker.opentrackr.org:1337/announce",
-            "udp://torrent.gresille.org:80/announce",
-            "udp://p4p.arenabg.com:1337",
-            "udp://tracker.leechers-paradise.org:6969",
-        ]
-        .iter()
-        .map(|x| x.to_string())
-        .collect()
-    }
-
-    pub fn get_magnet_link(&self, name: &str) -> String {
-        let dn = format!("{}{}", name, self.quality);
-        let trackers = Torrent::get_trackers()
-            .iter()
-            .map(|x| format!("tr={}", encode_url(x)))
-            .collect::<Vec<String>>()
-            .join("&");
-        let dn = encode_url(&dn);
-        let trackers = encode_url(&trackers);
-        format!("magnet:?xt=urn:btih:{}&dn={}&{}", self.hash, dn, trackers)
-    }
-}
-
+#[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 struct Movie {
     id: u32,
@@ -95,7 +55,7 @@ struct ApiResponse {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Error> {
+async fn main() -> Result<(), Box<dyn Error>> {
     println!("Enter a movie name: ");
     let mut query = String::new();
     std::io::stdin().read_line(&mut query).unwrap();
@@ -115,19 +75,42 @@ async fn main() -> Result<(), Error> {
         match api_response.data {
             Some(data) => {
                 if let Some(movies) = data.movies {
-                    for movie in movies {
-                        println!("Title: {}", movie.title);
-                        println!("Year: {}", movie.year);
-                        for torrent in movie.torrents {
-                            println!("Quality: {}", torrent.quality);
-                            println!("Seeds: {}", torrent.seeds);
-                            println!("Peers: {}", torrent.peers);
-                            println!("Size: {}", torrent.size);
-                            println!("Magnet Link: {}", torrent.get_magnet_link(&movie.title));
-                            println!();
-                        }
+                    for (i, movie) in movies.iter().enumerate() {
+                        println!("{}. {} ({})", i + 1, movie.title, movie.year);
+                    }
+                    println!("Enter the movie number to get magnet link: ");
+                    let mut choice = String::new();
+                    std::io::stdin().read_line(&mut choice).unwrap();
+                    let choice: usize = choice.trim().parse().unwrap();
+                    if choice > movies.len() {
+                        println!("Invalid choice.");
+                        return Ok(());
+                    }
+                    let movie = &movies[choice - 1];
+                    println!("Title: {}", movie.title);
+                    println!("Year: {}", movie.year);
+                    for (i, torrent) in movie.torrents.iter().enumerate() {
+                        println!(
+                            "{}. Quality: {} Seeds: {} Peers: {} Size: {}",
+                            i + 1,
+                            torrent.quality,
+                            torrent.seeds,
+                            torrent.peers,
+                            torrent.size
+                        );
                         println!();
                     }
+                    println!("Enter the torrent number to download: ");
+                    let mut choice = String::new();
+                    std::io::stdin().read_line(&mut choice).unwrap();
+                    let choice: usize = choice.trim().parse().unwrap();
+                    if choice > movie.torrents.len() {
+                        println!("Invalid choice.");
+                        return Ok(());
+                    }
+                    let torrent = &movie.torrents[choice - 1];
+                    torrent.download(&movie.title).await?;
+                    println!("Download complete.");
                 } else {
                     println!("No movies found.");
                 }

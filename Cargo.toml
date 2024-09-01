@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+cratetorrent = "0.1.0"
+librqbit = "7.0.1"
 reqwest = { version = "0.12.7", features = ["json"] }
 serde = { version = "1.0.209", features = ["derive"] }
 serde_json = "1.0.127"
