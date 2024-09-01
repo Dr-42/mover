@@ -22,6 +22,7 @@
 
 use serde::Deserialize;
 use std::error::Error;
+use std::io::Write;
 use urlencoding::encode as encode_url;
 
 pub mod torr;
@@ -56,7 +57,8 @@ struct ApiResponse {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    println!("Enter a movie name: ");
+    print!("Enter a movie name: ");
+    std::io::stdout().flush().unwrap();
     let mut query = String::new();
     std::io::stdin().read_line(&mut query).unwrap();
     let query = encode_url(query.trim());
@@ -78,7 +80,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     for (i, movie) in movies.iter().enumerate() {
                         println!("{}. {} ({})", i + 1, movie.title, movie.year);
                     }
-                    println!("Enter the movie number to get magnet link: ");
+                    print!("Enter the movie number to get magnets: ");
+                    std::io::stdout().flush().unwrap();
                     let mut choice = String::new();
                     std::io::stdin().read_line(&mut choice).unwrap();
                     let choice: usize = choice.trim().parse().unwrap();
@@ -98,9 +101,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
                             torrent.peers,
                             torrent.size
                         );
-                        println!();
                     }
-                    println!("Enter the torrent number to download: ");
+                    print!("Enter the torrent number to download: ");
+                    std::io::stdout().flush().unwrap();
                     let mut choice = String::new();
                     std::io::stdin().read_line(&mut choice).unwrap();
                     let choice: usize = choice.trim().parse().unwrap();

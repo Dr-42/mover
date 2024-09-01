@@ -17,9 +17,9 @@
 * along with mover.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use librqbit::{AddTorrent, Session};
+use librqbit::{AddTorrent, AddTorrentOptions, Session};
 use serde::Deserialize;
-use std::time::Duration;
+use std::{io::Write, time::Duration};
 use urlencoding::encode as encode_url;
 
 #[derive(Deserialize, Debug)]
@@ -74,7 +74,10 @@ impl Torrent {
         let handle = session
             .add_torrent(
                 AddTorrent::from_url(self.get_magnet_link(name)),
-                None, // options
+                Some(AddTorrentOptions {
+                    overwrite: true,
+                    ..Default::default()
+                }), // options
             )
             .await
             .unwrap()
@@ -84,8 +87,12 @@ impl Torrent {
             let h = handle.clone();
             async move {
                 loop {
-                    println!("{}", h.stats());
+                    print!("{}", h.stats());
+                    std::io::stdout().flush().unwrap();
                     tokio::time::sleep(Duration::from_secs(1)).await;
+                    // Reset the cursor to the beginning of the line
+                    print!("\r");
+                    std::io::stdout().flush().unwrap();
                 }
             }
         });
