@@ -17,7 +17,7 @@
 * along with mover.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use librqbit::{AddTorrent, AddTorrentOptions, Session, TorrentMetaV1File};
+use librqbit::{AddTorrent, AddTorrentOptions, ManagedTorrentState, Session};
 use serde::Deserialize;
 use std::{io::Write, path::PathBuf, time::Duration};
 use urlencoding::encode as encode_url;
@@ -89,6 +89,9 @@ impl Torrent {
                     print!("{}", h.stats());
                     std::io::stdout().flush().unwrap();
                     tokio::time::sleep(Duration::from_secs(1)).await;
+                    if h.stats().finished {
+                        break;
+                    }
                     // Reset the cursor to the beginning of the line
                     print!("\r");
                     std::io::stdout().flush().unwrap();
