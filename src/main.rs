@@ -25,6 +25,8 @@ use std::error::Error;
 use std::io::Write;
 use urlencoding::encode as encode_url;
 
+pub mod key_controls;
+pub mod media_player;
 pub mod torr;
 
 use torr::Torrent;
@@ -112,8 +114,22 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         return Ok(());
                     }
                     let torrent = &movie.torrents[choice - 1];
-                    torrent.download(&movie.title).await?;
+                    let movie_path = torrent.download(&movie.title).await?;
+                    println!();
                     println!("Download complete.");
+
+                    print!("Do you want to play the movie? (y/n): ");
+                    std::io::stdout().flush().unwrap();
+                    let mut choice = String::new();
+                    std::io::stdin().read_line(&mut choice).unwrap();
+                    if choice.trim() == "y" {
+                        let (finished, time) = media_player::run(movie_path, 0.0);
+                        if finished {
+                            println!("Movie finished.");
+                        } else {
+                            println!("Movie stopped at {}", time);
+                        }
+                    }
                 } else {
                     println!("No movies found.");
                 }

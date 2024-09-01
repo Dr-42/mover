@@ -17,9 +17,9 @@
 * along with mover.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use librqbit::{AddTorrent, AddTorrentOptions, Session};
+use librqbit::{AddTorrent, AddTorrentOptions, Session, TorrentMetaV1File};
 use serde::Deserialize;
-use std::{io::Write, time::Duration};
+use std::{io::Write, path::PathBuf, time::Duration};
 use urlencoding::encode as encode_url;
 
 #[derive(Deserialize, Debug)]
@@ -67,10 +67,9 @@ impl Torrent {
         format!("magnet:?xt=urn:btih:{}&dn={}&{}", self.hash, dn, trackers)
     }
 
-    pub async fn download(&self, name: &str) -> Result<(), Box<dyn std::error::Error>> {
-        let session = Session::new("/home/spandan/Downloads".into())
-            .await
-            .unwrap();
+    pub async fn download(&self, name: &str) -> Result<String, Box<dyn std::error::Error>> {
+        const DOWNLOAD_DIR: &str = "/home/spandan/Downloads";
+        let session = Session::new(DOWNLOAD_DIR.into()).await.unwrap();
         let handle = session
             .add_torrent(
                 AddTorrent::from_url(self.get_magnet_link(name)),
@@ -97,6 +96,56 @@ impl Torrent {
             }
         });
         handle.wait_until_completed().await?;
-        Ok(())
+        //Ok(())
+        let info = handle.shared().info.clone();
+        let folder = info.name.unwrap();
+
+        let video_exts = ["mp4", "mkv", "avi", "flv", "wmv", "mov"];
+        let subtitle_exts = ["srt"];
+
+        // Delete all files except video and subtitle files
+        for entry in std::fs::read_dir(format!("{}/{}", DOWNLOAD_DIR, folder))? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.is_dir() {
+                std::fs::remove_dir_all(path)?;
+            } else {
+                let ext = path.extension();
+                if ext.is_none() {
+                    std::fs::remove_file(path)?;
+                    continue;
+                }
+                let ext = ext.unwrap().to_str().unwrap();
+                if !video_exts.contains(&ext) && !subtitle_exts.contains(&ext) {
+                    std::fs::remove_file(path)?;
+                }
+            }
+        }
+
+        // Get all files in the folder
+        let mut files = Vec::new();
+        for entry in std::fs::read_dir(format!("{}/{}", DOWNLOAD_DIR, folder))? {
+            let entry = entry?;
+            let path = entry.path();
+            files.push(path);
+        }
+        // If there is only one video file, return it
+        for file in &files {
+            let ext = file.extension().unwrap().to_str().unwrap();
+            if video_exts.contains(&ext) {
+                return Ok(file.to_str().unwrap().to_string());
+            }
+        }
+        // If there are multiple video files, return the largest one
+        let mut largest = 0;
+        let mut largest_file = PathBuf::new();
+        for file in &files {
+            let metadata = std::fs::metadata(file)?;
+            if metadata.len() > largest {
+                largest = metadata.len();
+                largest_file = file.clone();
+            }
+        }
+        Ok(largest_file.to_str().unwrap().to_string())
     }
 }
