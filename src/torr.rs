@@ -68,7 +68,7 @@ impl Torrent {
     }
 
     pub async fn download(&self, name: &str) -> Result<String, Box<dyn std::error::Error>> {
-        const DOWNLOAD_DIR: &str = "/home/spandan/Downloads";
+        const DOWNLOAD_DIR: &str = "/home/spandan/Downloads/Movies";
         let session = Session::new(DOWNLOAD_DIR.into()).await.unwrap();
         let handle = session
             .add_torrent(
