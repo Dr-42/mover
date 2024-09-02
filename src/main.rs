@@ -96,12 +96,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     println!("Year: {}", movie.year);
                     for (i, torrent) in movie.torrents.iter().enumerate() {
                         println!(
-                            "{}. Quality: {} Seeds: {} Peers: {} Size: {}",
+                            "{}. Quality: {} Seeds: {} Peers: {} Size: {} Codec: {}",
                             i + 1,
                             torrent.quality,
                             torrent.seeds,
                             torrent.peers,
-                            torrent.size
+                            torrent.size,
+                            torrent.video_codec,
                         );
                     }
                     print!("Enter the torrent number to download: ");

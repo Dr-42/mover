@@ -1,3 +1,22 @@
+/*
+* Copyright (c) 2021, Dr. Spandan Roy
+*
+* This file is part of mover.
+*
+* mover is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* mover is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with mover.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 use libmpv::{protocol::*, *};
 use std::{
     fs::File,
@@ -78,4 +97,3 @@ fn seek(cookie: &mut File, offset: i64) -> i64 {
 fn size(cookie: &mut File) -> i64 {
     cookie.metadata().unwrap().len() as _
 }
-

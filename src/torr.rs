@@ -17,7 +17,7 @@
 * along with mover.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use librqbit::{AddTorrent, AddTorrentOptions, ManagedTorrentState, Session};
+use librqbit::{AddTorrent, AddTorrentOptions, Session};
 use serde::Deserialize;
 use std::{io::Write, path::PathBuf, time::Duration};
 use urlencoding::encode as encode_url;
